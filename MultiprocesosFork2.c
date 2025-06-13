@@ -37,43 +37,42 @@ int cara_detectada()
     return rand() % 10 < 3;
 }
 
-// Esta función es la que ejecuta cada proceso hijo que simula una cámara.
-// Cada cámara procesa 5 imágenes y, cuando detecta una cara, incrementa
-// un contador global de caras detectadas, el cual está en memoria compartida.
+// Esta función simula una cámara de seguridad utilizando un proceso.
+// Cada cámara procesa 5 imágenes y, si detecta una cara, incrementa el contador global.
+// Este contador está en memoria compartida y protegido por un semáforo.
 void procesarCamara(int camara, int *caras_detectadas, int semid)
 {
-    // Semilla única por proceso para que rand() no devuelva los mismos valores
+    // Se inicializa una semilla única por proceso para evitar que todos generen los mismos números aleatorios
     srand(time(NULL) ^ getpid());
 
-    // Operaciones para semáforo
-    struct sembuf p = {0, -1, 0}; // wait (decrementar semáforo)
-    struct sembuf v = {0, 1, 0};  // signal (incrementar semáforo)
+    // Definimos las operaciones para controlar el semáforo:
+    struct sembuf p = {0, -1, 0}; // operación "wait" (bloquea)
+    struct sembuf v = {0, 1, 0};  // operación "signal" (libera)
 
+    // Cada cámara procesa 5 imágenes
     for (int i = 0; i < IMAGENES_POR_CAMARA; i++)
     {
-        // Primero se simula el procesamiento de la imagen
+        // Simulamos que la cámara está procesando la imagen
         procesarImagen(camara, i);
 
-        // Luego se verifica si se detectó una cara en esta imagen
+        // Verificamos si se detectó una cara
         if (cara_detectada())
         {
-            printf("Camara %d detectó una cara en imagen %d\n", camara, i);
-
-            // Aquí incrementamos el contador global de caras detectadas.
-            // Es importante proteger este acceso con un semáforo para evitar
-            // condiciones de carrera cuando varios procesos escriben a la vez.
-
-            // Esperamos (wait) a que el semáforo esté libre para entrar a la sección crítica
+            // Antes de modificar el contador, se bloquea el semáforo para evitar condiciones de carrera
             semop(semid, &p, 1);
 
+            // Se incrementa la variable compartida de caras detectadas
             (*caras_detectadas)++;
 
-            // Liberamos (signal) el semáforo para que otro proceso pueda entrar
+            // Se imprime información sobre la detección
+            printf("Camara %d detectó cara en imagen %d (total: %d)\n", camara, i, *caras_detectadas);
+
+            // Se libera el semáforo para que otros procesos puedan acceder a la variable compartida
             semop(semid, &v, 1);
         }
     }
 
-    // Cuando se terminan de procesar todas las imágenes, se muestra un mensaje.
+    // Al finalizar el procesamiento de las imágenes, se indica que la cámara ha terminado
     printf("Camara %d terminó procesamiento\n", camara);
 }
 
@@ -182,4 +181,6 @@ int main()
     semctl(semid, 0, IPC_RMID);
 
     return 0;
+
+    
 }
