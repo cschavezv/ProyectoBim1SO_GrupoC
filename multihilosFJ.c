@@ -32,9 +32,11 @@ int cara_detectada(){
 }
 
 void* procesarCamara(void* arg){
+    
     /*El argumento es un puntero que se va a convertir a entero para saber qué número de cámara (int) es, se usa
-    (size_t) para evitar advertencias de conversion*/
-    int camara = (int)(size_t)arg;
+    (size_t) para evitar advertencias de conversion, de la siguiente forma se obtendra un numero del 0 al 7 */
+    int camara = *((int *)arg); 
+
 
     /*Con un for se va ir recorriendo todas las imagenes que debe procesar la camara (5 en total como se lo establecio 
     en la variable global)*/
@@ -47,7 +49,7 @@ void* procesarCamara(void* arg){
 
         //Luego de procesar la imagen se detecta de manera aleatoria si se detectó una cara con la ayuda de un "if"
 
-        if(cara_detectada){
+        if(cara_detectada()){
 
             /*Antes de que se modifique la variable (caras_detectadas), se necesita que un solo hilo a la vez acceda
             a ella, para evitar que varios hilos lleguen y modifiquen el valor de manera simultanea, ya que, eso genera
@@ -62,7 +64,7 @@ void* procesarCamara(void* arg){
             /*Se imprime un mensaje que indica cual camara detectó la cara, en que imagen se detecto la cara y cuantas
             caras se han detectado en total*/
 
-            printf("Camara %d detectó cara en imagen %d (total: %d)\n",camara,i,caras_detectadas);
+            printf("Camara %d detectó cara en imagen %d (total: %d)\n",camara + 1,i,caras_detectadas);
 
             /*Una vez ya se modifico la variable, se desbloquea el mutex para que los otros hilos puedan acceder
             al contador*/
