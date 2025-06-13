@@ -51,7 +51,7 @@ void* procesarCamara(void* arg){
             a ella, para evitar que varios hilos lleguen y modifiquen el valor de manera simultanea, ya que, eso genera
             errores, por esa razon se bloquea el mutex.*/
 
-            phtread_mutex_lock(&mutex);
+            pthread_mutex_lock(&mutex);
 
             //se incrementa el contador de las caras detectadas
 
